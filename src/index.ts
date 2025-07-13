@@ -1,16 +1,13 @@
 import express from 'express'
-import { Request, Response, NextFunction } from 'express'
-import userRouter from '~/user.routers'
+import usersRouter from '~/routers/users.routers'
 const app = express()
-const router = express.Router()
 
 const PORT = process.env.PORT || 3000
 
-app.get('/', (req: Request, res: Response) => {
-  res.send('Hello Express!')
-})
+// Middleware để parse JSON
+app.use(express.json())
 
-app.use('/user  ', userRouter)
+app.use('/users', usersRouter)
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`)
