@@ -13,11 +13,11 @@ enum MediaType {
   Image,
   Video
 }
-enum TweetAudience {
+enum PostAudience {
   Everyone, // 0
   TwitterCircle // 1
 }
-enum TweetType {
+enum PostType {
   Tweet,
   Retweet,
   Comment,
