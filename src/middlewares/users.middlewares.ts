@@ -1,10 +1,10 @@
 import { validate } from '~/utils/validation'
 import { Request, Response, NextFunction } from 'express'
 import { checkSchema } from 'express-validator'
+import usersService from '~/services/users.services'
 
 export const loginValidator = (req: Request, res: Response, next: NextFunction) => {
   const { email, password } = req.body
-
   if (!email || !password) {
     return res.status(400).json({ error: 'email and password are required' })
   }
@@ -27,7 +27,17 @@ export const registerValidator = validate(
       isEmail: true,
       normalizeEmail: true,
       notEmpty: true,
-      trim: true
+      trim: true,
+      custom: {
+        options: async (value: string) => {
+          const isExitEmail = await usersService.checkEmailService(value)
+          if (isExitEmail) {
+            throw new Error('Email already exists')
+          }
+
+          return value
+        }
+      }
     },
     password: {
       isString: true,
@@ -39,9 +49,9 @@ export const registerValidator = validate(
       isStrongPassword: {
         options: {
           minLength: 6,
-          minLowercase: 1,
-          minUppercase: 1,
-          minNumbers: 1,
+          minLowercase: 0,
+          minUppercase: 0,
+          minNumbers: 0,
           minSymbols: 0
         },
         errorMessage:
