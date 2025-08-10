@@ -26,7 +26,6 @@ class UsersService {
   }
 
   async register(payload: RegisterRequestBody) {
-    console.log('hashPassword:', hashPassword(payload.password))
     const result = await databaseService.users.insertOne(
       new User({
         ...payload,
@@ -48,8 +47,8 @@ class UsersService {
 
   async checkEmailService(email: string) {
     const user = await databaseService.users.findOne({ email })
-    console.log('Checking email: ', email)
-    console.log('User found: ', user)
+    // console.log('Checking email: ', email)
+    // console.log('User found: ', user
     return Boolean(user)
   }
 }
