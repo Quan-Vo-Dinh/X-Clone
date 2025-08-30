@@ -47,8 +47,6 @@ class UsersService {
 
   async checkEmailService(email: string) {
     const user = await databaseService.users.findOne({ email })
-    // console.log('Checking email: ', email)
-    // console.log('User found: ', user
     return Boolean(user)
   }
 }
