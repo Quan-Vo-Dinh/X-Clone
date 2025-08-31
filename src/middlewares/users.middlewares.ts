@@ -4,16 +4,55 @@ import { checkSchema } from 'express-validator'
 import usersService from '~/services/users.services'
 import { ErrorWithStatus } from '~/models/Errors'
 import { USERS_MESSAGES } from '~/constants/messages'
+import databaseService from '~/services/database.services'
 
-export const loginValidator = (req: Request, res: Response, next: NextFunction) => {
-  const { email, password } = req.body
-  if (!email || !password) {
-    return res.status(400).json({ error: 'email and password are required' })
-  }
-
-  // Add more validation logic as needed
-  next()
-}
+export const loginValidator = validate(
+  checkSchema({
+    email: {
+      isEmail: {
+        errorMessage: USERS_MESSAGES.EMAIL_IS_VALID
+      },
+      normalizeEmail: true,
+      notEmpty: {
+        errorMessage: USERS_MESSAGES.EMAIL_IS_REQUIRED
+      },
+      trim: true,
+      custom: {
+        options: async (value: string, { req }) => {
+          const user = await databaseService.users.findOne({ email: value })
+          if (user === null) {
+            throw new Error(USERS_MESSAGES.USER_NOT_FOUND)
+          }
+          req.user = user
+          return true
+        }
+      }
+    },
+    password: {
+      isString: {
+        errorMessage: USERS_MESSAGES.PASSWORD_MUST_BE_STRING
+      },
+      isLength: {
+        options: { min: 6, max: 50 },
+        errorMessage: USERS_MESSAGES.PASSWORD_LENGTH_MUST_BE_BETWEEN_6_AND_50
+      },
+      notEmpty: {
+        errorMessage: USERS_MESSAGES.PASSWORD_IS_REQUIRED
+      },
+      trim: true,
+      isStrongPassword: {
+        options: {
+          minLength: 6,
+          minLowercase: 1,
+          minUppercase: 1,
+          minNumbers: 1,
+          minSymbols: 1
+        },
+        errorMessage: USERS_MESSAGES.PASSWORD_MUST_BE_STRONG
+      }
+    }
+  })
+)
 
 export const registerValidator = validate(
   checkSchema({
@@ -93,8 +132,7 @@ export const registerValidator = validate(
           minNumbers: 1,
           minSymbols: 1
         },
-        errorMessage:
-          USERS_MESSAGES.PASSWORD_MUST_BE_STRONG
+        errorMessage: USERS_MESSAGES.PASSWORD_MUST_BE_STRONG
       },
       custom: {
         options: (value, { req }) => {
@@ -111,7 +149,8 @@ export const registerValidator = validate(
         errorMessage: USERS_MESSAGES.DATE_OF_BIRTH_MUST_BE_ISO8601
       },
       notEmpty: {
-        errorMessage: USERS_MESSAGES.DATE_OF_BIRTH_IS_REQUIRED}
+        errorMessage: USERS_MESSAGES.DATE_OF_BIRTH_IS_REQUIRED
+      }
     }
   })
 )
