@@ -2,6 +2,9 @@ import express from 'express'
 import usersRouter from '~/routers/users.routers'
 import databaseService from '~/services/database.services'
 import { defaultErrorHandler } from '~/middlewares/error.middlewares'
+import { config } from 'dotenv'
+
+config()
 
 databaseService.connect()
 

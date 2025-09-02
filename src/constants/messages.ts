@@ -6,7 +6,7 @@ export const USERS_MESSAGES = {
   EMAIL_IS_REQUIRED: 'Email is required',
   EMAIL_IS_VALID: 'Email is valid',
   EMAIL_ALREADY_EXISTS: 'Email already exists',
-  USER_NOT_FOUND: 'User not found',
+  EMAIL_OR_PASSWORD_IS_INCORRECT: 'Email or password is incorrect',
   PASSWORD_IS_REQUIRED: 'Password is required',
   PASSWORD_MUST_BE_STRING: 'Password must be a string',
   PASSWORD_LENGTH_MUST_BE_BETWEEN_6_AND_50: 'Password length must be between 6 and 50',
@@ -17,5 +17,7 @@ export const USERS_MESSAGES = {
   CONFIRM_PASSWORD_LENGTH_MUST_BE_BETWEEN_6_AND_50: 'Confirm password length must be between 6 and 50',
   PASSWORDS_DO_NOT_MATCH: 'Confirm password does not match password',
   DATE_OF_BIRTH_MUST_BE_ISO8601: 'Date of birth must be in ISO 8601 format',
-  DATE_OF_BIRTH_IS_REQUIRED: 'Date of birth is required'
+  DATE_OF_BIRTH_IS_REQUIRED: 'Date of birth is required',
+  REGISTER_SUCCESS: 'User registered successfully',
+  LOGIN_SUCCESS: 'User logged in successfully'
 } as const
