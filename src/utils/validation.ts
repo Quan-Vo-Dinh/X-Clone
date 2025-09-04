@@ -20,7 +20,6 @@ export const validate = (validation: RunnableValidationChains<ValidationChain>) 
       if (msg instanceof ErrorWithStatus && msg.status !== HTTP_STATUS.UNPROCESSABLE_ENTITY) {
         return next(msg)
       }
-      console.log('errorsObject[key]:', errorsObject[key])
       entityErrors.errors[key] = errorsObject[key]
     }
     next(entityErrors)
