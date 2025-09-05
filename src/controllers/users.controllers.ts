@@ -1,14 +1,24 @@
 import { Request, Response } from 'express'
 import usersService from '~/services/users.services'
 import { NextFunction, ParamsDictionary } from 'express-serve-static-core'
-import { LogoutRequestBody, RegisterRequestBody, TokenPayload } from '~/models/requests/User.request'
-import { User } from '~/models/schemas/User.schema'
+import {
+  LoginRequestBody,
+  LogoutRequestBody,
+  RegisterRequestBody,
+  TokenPayload,
+  VerifyEmailRequestBody
+} from '~/models/requests/User.request'
+import { User, UserVerifyStatus } from '~/models/schemas/User.schema'
 import { ObjectId } from 'mongodb'
 import { USERS_MESSAGES } from '~/constants/messages'
 import databaseService from '~/services/database.services'
 import { HTTP_STATUS } from '~/constants/httpStatus'
 
-export const loginController = async (req: Request, res: Response, next: NextFunction) => {
+export const loginController = async (
+  req: Request<ParamsDictionary, any, LoginRequestBody>,
+  res: Response,
+  next: NextFunction
+) => {
   const user = req.user as User
   const user_id = user._id as ObjectId
   const result = await usersService.login(user_id.toString())
@@ -43,7 +53,11 @@ export const logoutController = async (
   return res.status(HTTP_STATUS.OK).json({ message: result.message })
 }
 
-export const emailVerifyValidator = async (req: Request, res: Response, next: NextFunction) => {
+export const verifyEmailController = async (
+  req: Request<ParamsDictionary, any, VerifyEmailRequestBody>,
+  res: Response,
+  next: NextFunction
+) => {
   const { user_id } = req.decoded_email_verify_token as TokenPayload
   const user = await databaseService.users.findOne({ _id: new ObjectId(user_id) })
 
@@ -61,4 +75,17 @@ export const emailVerifyValidator = async (req: Request, res: Response, next: Ne
   if (result) {
     return res.status(HTTP_STATUS.OK).json({ message: USERS_MESSAGES.EMAIL_VERIFY_SUCCESS, result: result })
   }
+}
+
+export const resendVerifyEmailController = async (req: Request, res: Response, next: NextFunction) => {
+  const { user_id } = req.decoded_authorization as TokenPayload
+  const user = await databaseService.users.findOne({ _id: new ObjectId(user_id) })
+  if (!user) {
+    return res.status(HTTP_STATUS.NOT_FOUND).json({ message: USERS_MESSAGES.USER_NOT_FOUND })
+  }
+  if (user.verify === UserVerifyStatus.Verified) {
+    return res.status(HTTP_STATUS.OK).json({ message: USERS_MESSAGES.EMAIL_ALREADY_VERIFIED })
+  }
+  const result = await usersService.resendVerifyEmail(user_id)
+  return res.status(HTTP_STATUS.OK).json(result)
 }

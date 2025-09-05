@@ -119,18 +119,34 @@ class UsersService {
     const [access_token, refresh_token] = await this.signAccessAndRefreshToken(user_id)
     await databaseService.users.updateOne(
       { _id: new ObjectId(user_id) },
-      { $set: { email_verify_token: '', verify: UserVerifyStatus.Verified, updated_at: new Date() } }
+      {
+        $set: { email_verify_token: '', verify: UserVerifyStatus.Verified },
+        $currentDate: { updated_at: true }
+      }
     )
 
-    // databaseService.refreshTokens.insertOne(
-    //   new RefreshToken({
-    //     token: refresh_token,
-    //     user_id: new ObjectId(user_id)
-    //   })
-    // )
     return {
       access_token,
       refresh_token
+    }
+  }
+
+  async resendVerifyEmail(user_id: string) {
+    const email_verify_token = await this.signEmailVerifyToken(user_id)
+
+    // chưa implement tính năng gửi email
+    console.log('Resend email verify token:', email_verify_token)
+
+    await databaseService.users.updateOne(
+      { _id: new ObjectId(user_id) },
+      {
+        $set: { email_verify_token: email_verify_token },
+        $currentDate: { updated_at: true }
+      }
+    )
+
+    return {
+      message: USERS_MESSAGES.RESEND_VERIFY_EMAIL_SUCCESS
     }
   }
 }
