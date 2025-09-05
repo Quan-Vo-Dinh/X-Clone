@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb'
 
-enum UserVerifyStatus {
+export enum UserVerifyStatus {
   Unverified, // chưa xác thực email, mặc định = 0
   Verified, // đã xác thực email
   Banned // bị khóa
@@ -34,7 +34,7 @@ interface UserType {
   updated_at?: Date
   email_verify_token?: string
   forgot_password_token?: string
-  verify?: UserVerifyStatus
+  verify: UserVerifyStatus
 
   bio?: string
   location?: string

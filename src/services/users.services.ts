@@ -1,6 +1,6 @@
 import { TokenType } from '~/constants/enum'
 import { RegisterRequestBody } from '~/models/requests/User.request'
-import { User } from '~/models/schemas/User.schema'
+import { User, UserVerifyStatus } from '~/models/schemas/User.schema'
 import databaseService from '~/services/database.services'
 import { hashPassword } from '~/utils/crypto'
 import { signToken } from '~/utils/jwt'
@@ -13,9 +13,20 @@ import { USERS_MESSAGES } from '~/constants/messages'
 config()
 
 class UsersService {
+  constructor() {
+    // Debug biến môi trường
+    console.log('🔍 ENV DEBUGGING:')
+    console.log('JWT_ACCESS_SECRET:', process.env.JWT_ACCESS_SECRET ? '✅ EXISTS' : '❌ MISSING')
+    console.log('JWT_REFRESH_SECRET:', process.env.JWT_REFRESH_SECRET ? '✅ EXISTS' : '❌ MISSING')
+    console.log('JWT_EMAIL_VERIFY_SECRET:', process.env.JWT_EMAIL_VERIFY_SECRET ? '✅ EXISTS' : '❌ MISSING')
+    console.log('ACCESS_TOKEN_EXPIRES_IN:', process.env.ACCESS_TOKEN_EXPIRES_IN || '❌ MISSING')
+    console.log('REFRESH_TOKEN_EXPIRES_IN:', process.env.REFRESH_TOKEN_EXPIRES_IN || '❌ MISSING')
+    console.log('EMAIL_VERIFY_TOKEN_EXPIRES_IN:', process.env.EMAIL_VERIFY_TOKEN_EXPIRES_IN || '❌ MISSING')
+  }
   private signAccessToken(user_id: string): Promise<string> {
     return signToken({
       payload: { user_id: user_id, token_type: TokenType.AccessToken },
+      privateKey: process.env.JWT_ACCESS_SECRET as string,
       options: {
         expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN as StringValue
       }
@@ -25,8 +36,19 @@ class UsersService {
   private signRefreshToken(user_id: string): Promise<string> {
     return signToken({
       payload: { user_id: user_id, token_type: TokenType.RefreshToken },
+      privateKey: process.env.JWT_REFRESH_SECRET as string,
       options: {
         expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN as StringValue
+      }
+    })
+  }
+
+  private signEmailVerifyToken(user_id: string): Promise<string> {
+    return signToken({
+      payload: { user_id: user_id, token_type: TokenType.EmailVerifyToken },
+      privateKey: process.env.JWT_EMAIL_VERIFY_SECRET as string,
+      options: {
+        expiresIn: process.env.EMAIL_VERIFY_TOKEN_EXPIRES_IN as StringValue
       }
     })
   }
@@ -36,15 +58,21 @@ class UsersService {
   }
 
   async register(payload: RegisterRequestBody) {
-    const result = await databaseService.users.insertOne(
+    const user_id = new ObjectId()
+
+    const email_verify_token = await this.signEmailVerifyToken(user_id.toString())
+    await databaseService.users.insertOne(
       new User({
         ...payload,
+        _id: user_id,
         date_of_birth: new Date(payload.date_of_birth),
-        password: hashPassword(payload.password)
+        password: hashPassword(payload.password),
+        email_verify_token,
+        verify: UserVerifyStatus.Unverified
       })
     )
-    const user_id = result.insertedId.toString()
-    const [access_token, refresh_token] = await this.signAccessAndRefreshToken(user_id)
+
+    const [access_token, refresh_token] = await this.signAccessAndRefreshToken(user_id.toString())
 
     await databaseService.refreshTokens.insertOne(
       new RefreshToken({
@@ -52,6 +80,9 @@ class UsersService {
         user_id: new ObjectId(user_id)
       })
     )
+
+    // mô phỏng gửi email
+    console.log(`Email verify token: ${email_verify_token}`)
 
     return {
       access_token,
@@ -82,6 +113,25 @@ class UsersService {
   async checkEmailService(email: string) {
     const user = await databaseService.users.findOne({ email })
     return Boolean(user)
+  }
+
+  async verifyEmail(user_id: string) {
+    const [access_token, refresh_token] = await this.signAccessAndRefreshToken(user_id)
+    await databaseService.users.updateOne(
+      { _id: new ObjectId(user_id) },
+      { $set: { email_verify_token: '', verify: UserVerifyStatus.Verified, updated_at: new Date() } }
+    )
+
+    // databaseService.refreshTokens.insertOne(
+    //   new RefreshToken({
+    //     token: refresh_token,
+    //     user_id: new ObjectId(user_id)
+    //   })
+    // )
+    return {
+      access_token,
+      refresh_token
+    }
   }
 }
 
