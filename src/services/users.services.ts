@@ -53,6 +53,16 @@ class UsersService {
     })
   }
 
+  private signForgotPasswordToken(user_id: string): Promise<string> {
+    return signToken({
+      payload: { user_id: user_id, token_type: TokenType.ForgotPasswordToken },
+      privateKey: process.env.JWT_FORGOT_PASSWORD_SECRET as string,
+      options: {
+        expiresIn: process.env.FORGOT_PASSWORD_TOKEN_EXPIRES_IN as StringValue
+      }
+    })
+  }
+
   private signAccessAndRefreshToken(user_id: string): Promise<[string, string]> {
     return Promise.all([this.signAccessToken(user_id), this.signRefreshToken(user_id)])
   }
@@ -147,6 +157,21 @@ class UsersService {
 
     return {
       message: USERS_MESSAGES.RESEND_VERIFY_EMAIL_SUCCESS
+    }
+  }
+  async forgotPassword(user_id: string) {
+    const forgot_password_token = await this.signForgotPasswordToken(user_id)
+    await databaseService.users.updateOne({ _id: new ObjectId(user_id) }, [
+      {
+        $set: { forgot_password_token, updated_at: '$$NOW' }
+      }
+    ])
+
+    // chưa implement tính năng gửi email (Gửi email kèm đường link đến email người dùng, đường link này sẽ có dạng: `https://myapp.com/reset-password?token=<forgot_password_token>)
+    console.log('Forgot password token:', forgot_password_token)
+
+    return {
+      message: USERS_MESSAGES.CHECK_YOUR_EMAIL_FOR_RESET_PASSWORD
     }
   }
 }
