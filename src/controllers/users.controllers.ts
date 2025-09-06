@@ -1,13 +1,16 @@
+import { body } from 'express-validator'
 import { Request, Response } from 'express'
 import usersService from '~/services/users.services'
-import { NextFunction, ParamsDictionary } from 'express-serve-static-core'
+import { NextFunction, ParamsDictionary, RequestHandler } from 'express-serve-static-core'
 import {
   ForgotPasswordRequestBody,
   LoginRequestBody,
   LogoutRequestBody,
   RegisterRequestBody,
+  ResetPasswordRequestBody,
   TokenPayload,
-  VerifyEmailRequestBody
+  VerifyEmailRequestBody,
+  VerifyForgotPasswordRequestBody
 } from '~/models/requests/User.request'
 import { User, UserVerifyStatus } from '~/models/schemas/User.schema'
 import { ObjectId } from 'mongodb'
@@ -98,5 +101,24 @@ export const forgotPasswordController = async (
 ) => {
   const { _id } = req.user as User
   const result = await usersService.forgotPassword((_id as ObjectId).toString())
+  return res.status(HTTP_STATUS.OK).json({ message: result.message })
+}
+
+export const verifyForgotPasswordController = async (
+  req: Request<ParamsDictionary, any, VerifyForgotPasswordRequestBody>,
+  res: Response,
+  next: NextFunction
+) => {
+  return res.status(HTTP_STATUS.OK).json({ message: USERS_MESSAGES.VERIFY_FORGOT_PASSWORD_SUCCESS })
+}
+
+export const resetPasswordController = async (
+  req: Request<ParamsDictionary, any, ResetPasswordRequestBody>,
+  res: Response,
+  next: NextFunction
+) => {
+  const { user_id } = req.decoded_forgot_password_token as TokenPayload
+  const { new_password } = req.body
+  const result = await usersService.resetPassword(user_id, new_password)
   return res.status(HTTP_STATUS.OK).json({ message: result.message })
 }
