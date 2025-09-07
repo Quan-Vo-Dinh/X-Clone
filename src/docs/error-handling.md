@@ -20,7 +20,9 @@ app.get('/user', (req, res, next) => {
 - gọi `next()` để chuyển request sang request handler tiếp theo
 - gọi `next(err)` để chuyển request sang error handler tiếp theo
 
-khi xảy ra lỗi synchronous handler thì tự động sẽ dược chuyển sang error handler
+## Note quan trọng:
+
+khi xảy ra lỗi trong synchronous handler thì tự động sẽ dược chuyển sang error handler
 
 khi xãy ra lỗi trong asynchronous handler thì phải gọi `next(err)` để chuyển sang error handler
 

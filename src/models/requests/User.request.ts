@@ -39,3 +39,15 @@ export interface ResetPasswordRequestBody {
   new_password: string
   confirm_password: string
 }
+
+export interface UpdateMeRequestBody {
+  name?: string
+  email?: string
+  date_of_birth?: string
+  bio?: string
+  location?: string
+  website?: string
+  username?: string
+  avatar?: string
+  cover_photo?: string
+}

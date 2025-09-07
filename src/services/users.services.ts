@@ -1,5 +1,5 @@
 import { TokenType } from '~/constants/enum'
-import { RegisterRequestBody } from '~/models/requests/User.request'
+import { RegisterRequestBody, UpdateMeRequestBody } from '~/models/requests/User.request'
 import { User, UserVerifyStatus } from '~/models/schemas/User.schema'
 import databaseService from '~/services/database.services'
 import { hashPassword } from '~/utils/crypto'
@@ -9,6 +9,8 @@ import RefreshToken from '~/models/schemas/RefreshToken.schema'
 import { ObjectId } from 'mongodb'
 import { config } from 'dotenv'
 import { USERS_MESSAGES } from '~/constants/messages'
+import { ErrorWithStatus } from '~/models/Errors'
+import { HTTP_STATUS } from '~/constants/httpStatus'
 
 config()
 
@@ -194,6 +196,60 @@ class UsersService {
       { projection: { password: 0, email_verify_token: 0, forgot_password_token: 0 } }
     )
     return user
+  }
+
+  async updateMe(user_id: string, payload: UpdateMeRequestBody) {
+    // username của user phải là duy nhất
+    if (payload.username) {
+      const existingUser = await databaseService.users.findOne({
+        username: payload.username,
+        _id: { $ne: new ObjectId(user_id) }
+      })
+
+      if (existingUser) {
+        throw new ErrorWithStatus({
+          message: USERS_MESSAGES.USERNAME_ALREADY_EXISTS,
+          status: HTTP_STATUS.CONFLICT
+        })
+      }
+    }
+
+    const updatePayload: any = {
+      ...payload
+    }
+
+    if (payload.date_of_birth) {
+      updatePayload.date_of_birth = new Date(payload.date_of_birth)
+    }
+
+    // Thực hiện update với điều kiện user phải verified
+    const result = await databaseService.users.findOneAndUpdate(
+      {
+        _id: new ObjectId(user_id),
+        verify: UserVerifyStatus.Verified
+      },
+      {
+        $set: updatePayload,
+        $currentDate: { updated_at: true }
+      },
+      {
+        returnDocument: 'after',
+        projection: {
+          password: 0,
+          email_verify_token: 0,
+          forgot_password_token: 0
+        }
+      }
+    )
+
+    if (!result) {
+      throw new ErrorWithStatus({
+        message: USERS_MESSAGES.USER_NOT_FOUND_OR_NOT_VERIFIED,
+        status: HTTP_STATUS.NOT_FOUND
+      })
+    }
+
+    return result
   }
 }
 

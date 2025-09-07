@@ -14,6 +14,45 @@ import { config } from 'dotenv'
 import { TokenType } from '~/constants/enum'
 import { ObjectId } from 'mongodb'
 
+// note:
+
+const nameSchema: ParamSchema = {
+  isString: {
+    errorMessage: USERS_MESSAGES.NAME_MUST_BE_STRING
+  },
+  isLength: {
+    options: { min: 1, max: 100 },
+    errorMessage: USERS_MESSAGES.NAME_LENGTH_MUST_BE_BETWEEN_1_AND_100
+  },
+  trim: true
+}
+
+const emailSchema: ParamSchema = {
+  isEmail: {
+    errorMessage: USERS_MESSAGES.EMAIL_IS_VALID
+  },
+  normalizeEmail: true,
+  trim: true
+}
+
+const dateOfBirthSchema: ParamSchema = {
+  isISO8601: {
+    options: { strict: true, strictSeparator: true },
+    errorMessage: USERS_MESSAGES.DATE_OF_BIRTH_MUST_BE_ISO8601
+  }
+}
+
+const imageSchema: ParamSchema = {
+  isString: {
+    errorMessage: USERS_MESSAGES.IMAGE_MUST_BE_STRING
+  },
+  isURL: {
+    options: { require_protocol: true },
+    errorMessage: USERS_MESSAGES.IMAGE_MUST_BE_VALID_URL
+  },
+  trim: true
+}
+
 const passwordSchema: ParamSchema = {
   isString: {
     errorMessage: USERS_MESSAGES.PASSWORD_MUST_BE_STRING
@@ -182,27 +221,16 @@ export const registerValidator = validate(
   checkSchema(
     {
       name: {
+        ...nameSchema,
         notEmpty: {
           errorMessage: USERS_MESSAGES.NAME_IS_REQUIRED
-        },
-        isString: {
-          errorMessage: USERS_MESSAGES.NAME_MUST_BE_STRING
-        },
-        isLength: {
-          options: { min: 1, max: 100 },
-          errorMessage: USERS_MESSAGES.NAME_LENGTH_MUST_BE_BETWEEN_1_AND_100
-        },
-        trim: true
+        }
       },
       email: {
-        isEmail: {
-          errorMessage: USERS_MESSAGES.EMAIL_IS_VALID
-        },
-        normalizeEmail: true,
+        ...emailSchema,
         notEmpty: {
           errorMessage: USERS_MESSAGES.EMAIL_IS_REQUIRED
         },
-        trim: true,
         custom: {
           options: async (value: string) => {
             const isExitEmail = await usersService.checkEmailService(value)
@@ -217,10 +245,7 @@ export const registerValidator = validate(
       password: passwordSchema,
       confirm_password: confirmPasswordSchema,
       date_of_birth: {
-        isISO8601: {
-          options: { strict: true, strictSeparator: true },
-          errorMessage: USERS_MESSAGES.DATE_OF_BIRTH_MUST_BE_ISO8601
-        },
+        ...dateOfBirthSchema,
         notEmpty: {
           errorMessage: USERS_MESSAGES.DATE_OF_BIRTH_IS_REQUIRED
         }
@@ -416,6 +441,66 @@ export const resetPasswordValidator = validate(
       forgot_password_token: forgotPasswordTokenSchema,
       password: passwordSchema,
       confirm_password: confirmPasswordSchema
+    },
+    ['body']
+  )
+)
+
+export const updateMeValidator = validate(
+  checkSchema(
+    {
+      name: { ...nameSchema, optional: true },
+      date_of_birth: { ...dateOfBirthSchema, optional: true },
+      bio: {
+        isString: {
+          errorMessage: USERS_MESSAGES.BIO_MUST_BE_STRING
+        },
+        isLength: {
+          options: { min: 0, max: 200 },
+          errorMessage: USERS_MESSAGES.BIO_LENGTH_MUST_BE_BETWEEN_0_AND_200
+        },
+        trim: true,
+        optional: true
+      },
+      location: {
+        isString: {
+          errorMessage: USERS_MESSAGES.LOCATION_MUST_BE_STRING
+        },
+        isLength: {
+          options: { min: 0, max: 100 },
+          errorMessage: USERS_MESSAGES.LOCATION_LENGTH_MUST_BE_BETWEEN_0_AND_100
+        },
+        trim: true,
+        optional: true
+      },
+      website: {
+        isString: {
+          errorMessage: USERS_MESSAGES.WEBSITE_MUST_BE_STRING
+        },
+        isURL: {
+          options: { require_protocol: true },
+          errorMessage: USERS_MESSAGES.WEBSITE_MUST_BE_VALID_URL
+        },
+        trim: true,
+        optional: true
+      },
+      username: {
+        isString: {
+          errorMessage: USERS_MESSAGES.USERNAME_MUST_BE_STRING
+        },
+        isLength: {
+          options: { min: 1, max: 50 },
+          errorMessage: USERS_MESSAGES.USERNAME_LENGTH_MUST_BE_BETWEEN_1_AND_50
+        },
+        matches: {
+          options: /^[a-zA-Z0-9_]+$/,
+          errorMessage: USERS_MESSAGES.USERNAME_INVALID_FORMAT
+        },
+        trim: true,
+        optional: true
+      },
+      avatar: { ...imageSchema, optional: true },
+      cover_photo: { ...imageSchema, optional: true }
     },
     ['body']
   )
