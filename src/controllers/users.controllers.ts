@@ -3,6 +3,7 @@ import { Request, Response } from 'express'
 import usersService from '~/services/users.services'
 import { NextFunction, ParamsDictionary, RequestHandler } from 'express-serve-static-core'
 import {
+  FollowRequestBody,
   ForgotPasswordRequestBody,
   LoginRequestBody,
   LogoutRequestBody,
@@ -26,7 +27,10 @@ export const loginController = async (
 ) => {
   const user = req.user as User
   const user_id = user._id as ObjectId
-  const result = await usersService.login(user_id.toString())
+  const result = await usersService.login({
+    user_id: user_id.toString(),
+    verify: user.verify
+  })
   return res.status(HTTP_STATUS.OK).json({ message: USERS_MESSAGES.LOGIN_SUCCESS, result: result })
 }
 
@@ -100,8 +104,11 @@ export const forgotPasswordController = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { _id } = req.user as User
-  const result = await usersService.forgotPassword((_id as ObjectId).toString())
+  const user = req.user as User
+  const result = await usersService.forgotPassword({
+    user_id: (user._id as ObjectId).toString(),
+    verify: user.verify
+  })
   return res.status(HTTP_STATUS.OK).json({ message: result.message })
 }
 
@@ -142,4 +149,15 @@ export const updateMeController = async (
     message: USERS_MESSAGES.UPDATE_PROFILE_SUCCESS,
     result: result
   })
+}
+
+export const followController = async (
+  req: Request<ParamsDictionary, any, FollowRequestBody>,
+  res: Response,
+  next: NextFunction
+) => {
+  const { user_id } = req.decoded_authorization as TokenPayload
+  const { followed_user_id } = req.body
+  const result = await usersService.follow(user_id, followed_user_id)
+  return res.status(HTTP_STATUS.OK).json(result)
 }

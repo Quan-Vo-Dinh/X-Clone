@@ -52,5 +52,10 @@ export const USERS_MESSAGES = {
   IMAGE_MUST_BE_VALID_URL: 'Image must be a valid URL',
   UPDATE_PROFILE_SUCCESS: 'Update profile successfully',
   USER_NOT_VERIFIED: 'User not verified',
-  USER_NOT_FOUND_OR_NOT_VERIFIED: 'User not found or not verified'
+  USER_NOT_FOUND_OR_NOT_VERIFIED: 'User not found or not verified',
+  CANNOT_FOLLOW_YOURSELF: 'You cannot follow yourself',
+  FOLLOW_SUCCESS: 'Followed user successfully',
+  UNFOLLOW_SUCCESS: 'Unfollowed user successfully',
+  FOLLOWED: 'followed',
+  INVALID_FOLLOWED_USER_ID: 'Invalid followed_user_id'
 } as const

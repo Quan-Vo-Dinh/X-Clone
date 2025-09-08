@@ -9,10 +9,12 @@ import { verifyToken } from '~/utils/jwt'
 import { HTTP_STATUS } from '~/constants/httpStatus'
 import { JsonWebTokenError } from 'jsonwebtoken'
 import { capitalize } from 'lodash'
-import { Request } from 'express'
+import { NextFunction, Request, Response } from 'express'
 import { config } from 'dotenv'
 import { TokenType } from '~/constants/enum'
 import { ObjectId } from 'mongodb'
+import { UserVerifyStatus } from '~/models/schemas/User.schema'
+import { TokenPayload } from '~/models/requests/User.request'
 
 // note:
 
@@ -303,6 +305,20 @@ export const accessTokenValidator = validate(
   )
 )
 
+export const verifiedUserValidator = (req: Request, res: Response, next: NextFunction) => {
+  const { verify } = req.decoded_authorization as TokenPayload
+
+  if (verify !== UserVerifyStatus.Verified) {
+    return next(
+      new ErrorWithStatus({
+        message: USERS_MESSAGES.USER_NOT_VERIFIED,
+        status: HTTP_STATUS.FORBIDDEN
+      })
+    )
+  }
+  next()
+}
+
 export const refreshTokenValidator = validate(
   checkSchema(
     {
@@ -504,4 +520,30 @@ export const updateMeValidator = validate(
     },
     ['body']
   )
+)
+
+export const followValidator = validate(
+  checkSchema({
+    followed_user_id: {
+      custom: {
+        options: async (value: string, { req }) => {
+          if (!ObjectId.isValid(value)) {
+            throw new ErrorWithStatus({
+              message: USERS_MESSAGES.INVALID_FOLLOWED_USER_ID,
+              status: HTTP_STATUS.BAD_REQUEST
+            })
+          }
+
+          const followed_user = await databaseService.users.findOne({ _id: new ObjectId(value) })
+          if (!followed_user) {
+            throw new ErrorWithStatus({
+              message: USERS_MESSAGES.USER_NOT_FOUND,
+              status: HTTP_STATUS.NOT_FOUND
+            })
+          }
+          return true
+        }
+      }
+    }
+  })
 )

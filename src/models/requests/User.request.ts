@@ -1,5 +1,6 @@
 import { JwtPayload } from 'jsonwebtoken'
 import { TokenType } from '~/constants/enum'
+import { UserVerifyStatus } from '~/models/schemas/User.schema'
 
 export interface LoginRequestBody {
   email: string
@@ -20,6 +21,7 @@ export interface VerifyEmailRequestBody {
 export interface TokenPayload extends JwtPayload {
   user_id: string
   token_type: TokenType
+  verify: UserVerifyStatus
 }
 
 export interface LogoutRequestBody {
@@ -50,4 +52,8 @@ export interface UpdateMeRequestBody {
   username?: string
   avatar?: string
   cover_photo?: string
+}
+
+export interface FollowRequestBody {
+  followed_user_id: string
 }

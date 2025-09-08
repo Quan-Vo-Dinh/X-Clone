@@ -9,11 +9,13 @@ import {
   verifyForgotPasswordController,
   resetPasswordController,
   getMeController,
-  updateMeController
+  updateMeController,
+  followController
 } from '~/controllers/users.controllers'
 import { filterMiddleware } from '~/middlewares/common.middlewares'
 import {
   accessTokenValidator,
+  verifiedUserValidator,
   verifyEmailTokenValidator,
   verifyForgotPasswordTokenValidator,
   forgotPasswordValidator,
@@ -21,7 +23,8 @@ import {
   refreshTokenValidator,
   registerValidator,
   resetPasswordValidator,
-  updateMeValidator
+  updateMeValidator,
+  followValidator
 } from '~/middlewares/users.middlewares'
 import { UpdateMeRequestBody } from '~/models/requests/User.request'
 import { wrapRequestHandler } from '~/utils/handlers'
@@ -117,6 +120,7 @@ usersRouter.get('/me', accessTokenValidator, wrapRequestHandler(getMeController)
 usersRouter.patch(
   '/me',
   accessTokenValidator,
+  verifiedUserValidator,
   updateMeValidator,
   filterMiddleware<UpdateMeRequestBody>([
     'name',
@@ -130,5 +134,20 @@ usersRouter.patch(
     'cover_photo'
   ]),
   wrapRequestHandler(updateMeController)
+)
+
+/**
+ * Description: Follow a user
+ * Path: /follow
+ * Method: POST
+ * Header: { Authorization: Bearer <access_token> }
+ * Body: { user_id_to_follow: string }
+ */
+usersRouter.post(
+  '/follow',
+  accessTokenValidator,
+  verifiedUserValidator,
+  followValidator,
+  wrapRequestHandler(followController)
 )
 export default usersRouter
