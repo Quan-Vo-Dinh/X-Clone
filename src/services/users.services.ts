@@ -218,21 +218,6 @@ class UsersService {
   }
 
   async updateMe(user_id: string, payload: UpdateMeRequestBody) {
-    // username của user phải là duy nhất
-    if (payload.username) {
-      const existingUser = await databaseService.users.findOne({
-        username: payload.username,
-        _id: { $ne: new ObjectId(user_id) }
-      })
-
-      if (existingUser) {
-        throw new ErrorWithStatus({
-          message: USERS_MESSAGES.USERNAME_ALREADY_EXISTS,
-          status: HTTP_STATUS.CONFLICT
-        })
-      }
-    }
-
     const updatePayload: any = {
       ...payload
     }
@@ -296,6 +281,32 @@ class UsersService {
     )
     return {
       message: USERS_MESSAGES.FOLLOW_SUCCESS
+    }
+  }
+
+  async unfollow(user_id: string, followed_user_id: string) {
+    if (user_id === followed_user_id) {
+      throw new ErrorWithStatus({
+        message: USERS_MESSAGES.CANNOT_UNFOLLOW_YOURSELF,
+        status: HTTP_STATUS.BAD_REQUEST
+      })
+    }
+    const existingFollow = await databaseService.followers.findOne({
+      user_id: new ObjectId(user_id),
+      followed_user_id: new ObjectId(followed_user_id)
+    })
+    if (!existingFollow) {
+      throw new ErrorWithStatus({
+        message: USERS_MESSAGES.NOT_FOLLOWED_YET,
+        status: HTTP_STATUS.BAD_REQUEST
+      })
+    }
+    await databaseService.followers.deleteOne({
+      user_id: new ObjectId(user_id),
+      followed_user_id: new ObjectId(followed_user_id)
+    })
+    return {
+      message: USERS_MESSAGES.UNFOLLOW_SUCCESS
     }
   }
 }

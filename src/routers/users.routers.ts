@@ -10,7 +10,8 @@ import {
   resetPasswordController,
   getMeController,
   updateMeController,
-  followController
+  followController,
+  unfollowController
 } from '~/controllers/users.controllers'
 import { filterMiddleware } from '~/middlewares/common.middlewares'
 import {
@@ -24,9 +25,10 @@ import {
   registerValidator,
   resetPasswordValidator,
   updateMeValidator,
-  followValidator
+  followValidator,
+  unfollowValidator
 } from '~/middlewares/users.middlewares'
-import { UpdateMeRequestBody } from '~/models/requests/User.request'
+import { UpdateMeRequestBody, UnfollowRequestParams } from '~/models/requests/User.request'
 import { wrapRequestHandler } from '~/utils/handlers'
 
 const usersRouter = Router()
@@ -137,11 +139,11 @@ usersRouter.patch(
 )
 
 /**
- * Description: Follow a user
+ * Description: Follow someone
  * Path: /follow
  * Method: POST
  * Header: { Authorization: Bearer <access_token> }
- * Body: { user_id_to_follow: string }
+ * Body: { followed_user_id: string }
  */
 usersRouter.post(
   '/follow',
@@ -149,5 +151,20 @@ usersRouter.post(
   verifiedUserValidator,
   followValidator,
   wrapRequestHandler(followController)
+)
+
+/**
+ * Description: Unfollow someone
+ * Path: /follow/:user_id
+ * Method: DELETE
+ * Header: { Authorization: Bearer <access_token> }
+ * Body: { followed_user_id: string }
+ */
+usersRouter.delete(
+  '/follow/:user_id',
+  accessTokenValidator,
+  verifiedUserValidator,
+  unfollowValidator,
+  wrapRequestHandler<UnfollowRequestParams>(unfollowController)
 )
 export default usersRouter

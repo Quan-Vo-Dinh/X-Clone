@@ -1,7 +1,7 @@
 import { body } from 'express-validator'
-import { Request, Response } from 'express'
+import { NextFunction, Request, Response } from 'express'
 import usersService from '~/services/users.services'
-import { NextFunction, ParamsDictionary, RequestHandler } from 'express-serve-static-core'
+import { ParamsDictionary, RequestHandler } from 'express-serve-static-core'
 import {
   FollowRequestBody,
   ForgotPasswordRequestBody,
@@ -10,6 +10,7 @@ import {
   RegisterRequestBody,
   ResetPasswordRequestBody,
   TokenPayload,
+  UnfollowRequestParams,
   UpdateMeRequestBody,
   VerifyEmailRequestBody,
   VerifyForgotPasswordRequestBody
@@ -159,5 +160,12 @@ export const followController = async (
   const { user_id } = req.decoded_authorization as TokenPayload
   const { followed_user_id } = req.body
   const result = await usersService.follow(user_id, followed_user_id)
+  return res.status(HTTP_STATUS.OK).json(result)
+}
+
+export const unfollowController = async (req: Request<UnfollowRequestParams>, res: Response, next: NextFunction) => {
+  const { user_id } = req.decoded_authorization as TokenPayload
+  const { user_id: followed_user_id } = req.params
+  const result = await usersService.unfollow(user_id, followed_user_id)
   return res.status(HTTP_STATUS.OK).json(result)
 }

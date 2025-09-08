@@ -111,6 +111,29 @@ const confirmPasswordSchema: ParamSchema = {
   }
 }
 
+const userIdSchema: ParamSchema = {
+  custom: {
+    options: async (value: string, { req }) => {
+      console.log('value userIdSchema', value)
+      if (!ObjectId.isValid(value)) {
+        throw new ErrorWithStatus({
+          message: USERS_MESSAGES.INVALID_FOLLOWED_USER_ID,
+          status: HTTP_STATUS.BAD_REQUEST
+        })
+      }
+
+      const followed_user = await databaseService.users.findOne({ _id: new ObjectId(value) })
+      if (!followed_user) {
+        throw new ErrorWithStatus({
+          message: USERS_MESSAGES.USER_NOT_FOUND,
+          status: HTTP_STATUS.NOT_FOUND
+        })
+      }
+      return true
+    }
+  }
+}
+
 const forgotPasswordTokenSchema: ParamSchema = {
   trim: true,
   custom: {
@@ -512,6 +535,18 @@ export const updateMeValidator = validate(
           options: /^[a-zA-Z0-9_]+$/,
           errorMessage: USERS_MESSAGES.USERNAME_INVALID_FORMAT
         },
+        custom: {
+          options: async (value: string, { req }) => {
+            const existingUser = await databaseService.users.findOne({ username: value })
+            if (existingUser) {
+              throw new ErrorWithStatus({
+                message: USERS_MESSAGES.USERNAME_ALREADY_EXISTS,
+                status: HTTP_STATUS.CONFLICT
+              })
+            }
+            return true
+          }
+        },
         trim: true,
         optional: true
       },
@@ -523,27 +558,19 @@ export const updateMeValidator = validate(
 )
 
 export const followValidator = validate(
-  checkSchema({
-    followed_user_id: {
-      custom: {
-        options: async (value: string, { req }) => {
-          if (!ObjectId.isValid(value)) {
-            throw new ErrorWithStatus({
-              message: USERS_MESSAGES.INVALID_FOLLOWED_USER_ID,
-              status: HTTP_STATUS.BAD_REQUEST
-            })
-          }
+  checkSchema(
+    {
+      followed_user_id: userIdSchema
+    },
+    ['body']
+  )
+)
 
-          const followed_user = await databaseService.users.findOne({ _id: new ObjectId(value) })
-          if (!followed_user) {
-            throw new ErrorWithStatus({
-              message: USERS_MESSAGES.USER_NOT_FOUND,
-              status: HTTP_STATUS.NOT_FOUND
-            })
-          }
-          return true
-        }
-      }
-    }
-  })
+export const unfollowValidator = validate(
+  checkSchema(
+    {
+      user_id: userIdSchema
+    },
+    ['params']
+  )
 )
