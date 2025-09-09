@@ -59,6 +59,13 @@ export interface FollowRequestBody {
   followed_user_id: string
 }
 
+// cần extends ParamsDictionary để không bị lỗi khi định nghĩa trong controller
 export interface UnfollowRequestParams extends ParamsDictionary {
   user_id: string
+}
+
+export interface ChangePasswordRequestBody {
+  old_password: string
+  new_password: string
+  confirm_password: string
 }
