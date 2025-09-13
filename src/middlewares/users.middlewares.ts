@@ -114,7 +114,6 @@ const confirmPasswordSchema = (fieldName: string): ParamSchema => ({
 const userIdSchema: ParamSchema = {
   custom: {
     options: async (value: string, { req }) => {
-      console.log('value userIdSchema', value)
       if (!ObjectId.isValid(value)) {
         throw new ErrorWithStatus({
           message: USERS_MESSAGES.INVALID_FOLLOWED_USER_ID,

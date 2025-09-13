@@ -1,8 +1,10 @@
 import express from 'express'
-import usersRouter from '~/routers/users.routers'
+import usersRouter from '~/routers/users.routes'
 import databaseService from '~/services/database.services'
 import { defaultErrorHandler } from '~/middlewares/error.middlewares'
 import { config } from 'dotenv'
+import mediasRouter from './routers/medias.routes'
+import { initFolder } from './utils/file'
 
 config()
 
@@ -13,8 +15,12 @@ const router = express.Router()
 
 const PORT = process.env.PORT || 3000
 
+// Khởi tạo thư mục lưu trữ file nếu chưa tồn tại
+initFolder('uploads/images')
+
 app.use(express.json())
 app.use('/users', usersRouter)
+app.use('/medias', mediasRouter)
 
 app.use(defaultErrorHandler)
 
